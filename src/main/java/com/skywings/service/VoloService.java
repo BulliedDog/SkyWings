@@ -3,12 +3,12 @@ package com.skywings.service;
 import com.skywings.dto.VoloDTO;
 import com.skywings.mapper.VoloMapper;
 import com.skywings.model.Volo;
-import com.skywings.observer.VoloStatoEvent;
+import com.skywings.observer.Observer;
+import com.skywings.observer.Subject;
 import com.skywings.repository.interfaces.VoloDAO;
 import com.skywings.strategy.TariffaStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,21 +17,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class VoloService {
+public class VoloService implements Subject {
+
+    private final List<Observer> observers = new ArrayList<>();
 
     @Autowired
     private VoloDAO voloDAO;
 
-    // --- NUOVE DIPENDENZE AGGIUNTE ---
     @Autowired
     private VoloMapper voloMapper;
 
     @Autowired
     @Qualifier("tariffaDinamica") //Strategia di default
     private TariffaStrategy tariffaStrategy;
-
-    @Autowired
-    private ApplicationEventPublisher eventPublisher;
 
     public List<Volo> getAllVoli() {
         return voloDAO.findAll();
@@ -58,35 +56,20 @@ public class VoloService {
             // 3. Eseguo l'update/save
             voloDAO.save(voloAggiornato);
 
-            // 4. Pubblico l'evento solo se lo stato è effettivamente cambiato
+            // 4. Pubblico l'evento (tramite Pattern Observer) solo se lo stato è effettivamente cambiato
             if (statoCambiato) {
-                eventPublisher.publishEvent(new VoloStatoEvent(
-                        voloAggiornato.getId(),
-                        voloAggiornato.getCodiceVolo(),
-                        voloAggiornato.getStato()
-                ));
-                System.out.println("DEBUG: Stato cambiato in " + voloAggiornato.getStato() + ". Evento pubblicato.");
+                notifyObservers(voloAggiornato);
+
+                System.out.println("DEBUG: Stato cambiato in " + voloAggiornato.getStato() + ". Observer notificati.");
             }
         } else {
             // Se l'ID è null, è un nuovo inserimento (Create)
             voloDAO.save(voloAggiornato);
-            System.out.println("DEBUG: Nuovo volo creato, nessun evento di cambio stato necessario.");
+            System.out.println("DEBUG: Nuovo volo creato, nessuna notifica di cambio stato necessaria.");
         }
     }
 
-    @Transactional
-    public void aggiornaStatoVolo(Long idVolo, Volo.StatoVolo nuovoStato) {
-        Volo v = voloDAO.findById(idVolo)
-                .orElseThrow(() -> new RuntimeException("Volo non trovato con ID: " + idVolo));
 
-        // Controllo se è davvero una variazione
-        if (!v.getStato().equals(nuovoStato)) {
-            System.out.println("DEBUG: Pubblicazione evento per volo " + idVolo + "aggiornaStatoVolo");
-            v.setStato(nuovoStato);
-            voloDAO.save(v);
-            eventPublisher.publishEvent(new VoloStatoEvent(idVolo, v.getCodiceVolo(), nuovoStato));
-        }
-    }
 
     public void deleteVolo(Long id) {
         voloDAO.deleteById(id);
@@ -127,5 +110,37 @@ public class VoloService {
             voliDaMostrare.add(dto);
         }
         return voliDaMostrare;
+    }
+
+    @Override
+    public void addObserver(Observer o) {
+        if (!observers.contains(o)) {
+            observers.add(o);
+        }
+    }
+
+    @Override
+    public void removeObserver(Observer o) {
+        observers.remove(o);
+    }
+
+    @Override
+    public void notifyObservers(Volo volo) {
+        for (Observer o : observers) {
+            o.update(volo);
+        }
+    }
+
+    public void aggiornaStatoVolo(Long idVolo, Volo.StatoVolo nuovoStato) {
+        Volo v = voloDAO.findById(idVolo)
+                .orElseThrow(() -> new RuntimeException("Volo non trovato con ID: " + idVolo));
+
+        if (!v.getStato().equals(nuovoStato)) {
+            System.out.println("DEBUG: Aggiornamento stato e notifica per volo " + idVolo);
+            v.setStato(nuovoStato);
+            voloDAO.save(v);
+
+            notifyObservers(v);
+        }
     }
 }

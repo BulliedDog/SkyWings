@@ -27,4 +27,19 @@ public class NotificaRepository implements NotificaDAO {
         String sql = "UPDATE notifiche SET letta = TRUE WHERE utente_id = ?";
         jdbcTemplate.update(sql, utenteId);
     }
+
+    @Override
+    public void creaNotifichePerVoloModificato(Long idVolo, String messaggio) {
+        // La query estrae in automatico gli id degli utenti dalla tabella prenotazioni
+        // DISTINCT evita di inviare 2 notifiche se un utente ha prenotato 2 posti separati per lo stesso volo
+        String sql = "INSERT INTO notifiche (utente_id, messaggio, letta, data_creazione) " +
+                "SELECT DISTINCT utente_id, ?, FALSE, CURRENT_TIMESTAMP " +
+                "FROM prenotazioni " +
+                "WHERE volo_id = ?";
+
+        // Eseguiamo l'update passando i parametri nell'ordine corretto (prima il messaggio per il SELECT, poi l'idVolo per la WHERE)
+        int notificheCreate = jdbcTemplate.update(sql, messaggio, idVolo);
+
+        System.out.println(">>> [DB] Create " + notificheCreate + " notifiche per il volo ID: " + idVolo);
+    }
 }
