@@ -10,7 +10,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
-@Component("tariffaDinamica")
+@Component("tariffaDinamicaStrategy")
 @Primary // Questo dice a Spring: "Se non specifico nulla, usa questa"
 public class TariffaDinamicaStrategy implements TariffaStrategy {
 

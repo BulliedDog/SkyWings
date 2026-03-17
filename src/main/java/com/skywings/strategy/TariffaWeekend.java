@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 
-@Component
+@Component("tariffaWeekend")
 public class TariffaWeekend implements TariffaStrategy {
 
     @Override

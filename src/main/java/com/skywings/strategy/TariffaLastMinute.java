@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
-@Component
+@Component("tariffaLastMinute")
 public class TariffaLastMinute implements TariffaStrategy {
 
     @Override

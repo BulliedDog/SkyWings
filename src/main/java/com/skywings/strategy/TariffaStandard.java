@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
-@Component
+@Component("tariffaStandard")
 public class TariffaStandard implements TariffaStrategy {
 
     @Override

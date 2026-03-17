@@ -27,10 +27,6 @@ public class VoloService implements Subject {
     @Autowired
     private VoloMapper voloMapper;
 
-    @Autowired
-    @Qualifier("tariffaDinamica") //Strategia di default
-    private TariffaStrategy tariffaStrategy;
-
     public List<Volo> getAllVoli() {
         return voloDAO.findAll();
     }
@@ -76,40 +72,15 @@ public class VoloService implements Subject {
     }
 
     public List<VoloDTO> getAllVoliConPrezzo() {
-        // Riusiamo il metodo originale per prendere i dati dal DB
-        List<Volo> voliDalDb = getAllVoli();
-        List<VoloDTO> voliDaMostrare = new ArrayList<>();
 
-        for (Volo volo : voliDalDb) {
-            VoloDTO dto = voloMapper.toDto(volo);
-            // Applichiamo la strategia per calcolare il prezzo finale
-            dto.setPrezzoCalcolato(tariffaStrategy.calcolaPrezzo(volo, volo.getPrezzoBase()));
-            voliDaMostrare.add(dto);
-        }
-        return voliDaMostrare;
     }
 
     public VoloDTO getVoloByIdConPrezzo(Long id) {
-        Volo volo = getVoloById(id);
-        if (volo == null) {
-            return null;
-        }
-        VoloDTO dto = voloMapper.toDto(volo);
-        dto.setPrezzoCalcolato(tariffaStrategy.calcolaPrezzo(volo, volo.getPrezzoBase()));
-        return dto;
+
     }
 
     public List<VoloDTO> getVoliFilteredConPrezzo(Long originId, Long destId, LocalDate date) {
-        // Riusiamo il metodo originale di filtraggio
-        List<Volo> voliDalDb = getVoliFiltered(originId, destId, date);
-        List<VoloDTO> voliDaMostrare = new ArrayList<>();
 
-        for (Volo volo : voliDalDb) {
-            VoloDTO dto = voloMapper.toDto(volo);
-            dto.setPrezzoCalcolato(tariffaStrategy.calcolaPrezzo(volo, volo.getPrezzoBase()));
-            voliDaMostrare.add(dto);
-        }
-        return voliDaMostrare;
     }
 
     @Override
