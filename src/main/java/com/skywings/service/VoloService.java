@@ -6,6 +6,8 @@ import com.skywings.model.Volo;
 import com.skywings.observer.Observer;
 import com.skywings.observer.Subject;
 import com.skywings.repository.interfaces.VoloDAO;
+import com.skywings.strategy.TariffaContext;
+import com.skywings.strategy.TariffaManager;
 import com.skywings.strategy.TariffaStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -26,6 +28,9 @@ public class VoloService implements Subject {
 
     @Autowired
     private VoloMapper voloMapper;
+
+    @Autowired
+    private TariffaManager tariffaManager;
 
     public List<Volo> getAllVoli() {
         return voloDAO.findAll();
@@ -65,22 +70,54 @@ public class VoloService implements Subject {
         }
     }
 
-
-
     public void deleteVolo(Long id) {
         voloDAO.deleteById(id);
     }
 
     public List<VoloDTO> getAllVoliConPrezzo() {
+        List<Volo> voliDalDb = getAllVoli();
+        List<VoloDTO> voliDaMostrare = new ArrayList<>();
 
+        for (Volo volo : voliDalDb) {
+            VoloDTO dto = voloMapper.toDto(volo);
+
+            // Richiediamo il Context dinamicamente configurato per QUESTO volo
+            TariffaContext context = tariffaManager.getContextConfigurato(volo);
+
+            // Eseguiamo il calcolo tramite il context
+            dto.setPrezzoCalcolato(context.eseguiCalcolo(volo, volo.getPrezzoBase()));
+
+            voliDaMostrare.add(dto);
+        }
+        return voliDaMostrare;
     }
 
     public VoloDTO getVoloByIdConPrezzo(Long id) {
+        Volo volo = getVoloById(id);
+        if (volo == null) {
+            return null;
+        }
+        VoloDTO dto = voloMapper.toDto(volo);
 
+        TariffaContext context = tariffaManager.getContextConfigurato(volo);
+        dto.setPrezzoCalcolato(context.eseguiCalcolo(volo, volo.getPrezzoBase()));
+
+        return dto;
     }
 
     public List<VoloDTO> getVoliFilteredConPrezzo(Long originId, Long destId, LocalDate date) {
+        List<Volo> voliDalDb = getVoliFiltered(originId, destId, date);
+        List<VoloDTO> voliDaMostrare = new ArrayList<>();
 
+        for (Volo volo : voliDalDb) {
+            VoloDTO dto = voloMapper.toDto(volo);
+
+            TariffaContext context = tariffaManager.getContextConfigurato(volo);
+            dto.setPrezzoCalcolato(context.eseguiCalcolo(volo, volo.getPrezzoBase()));
+
+            voliDaMostrare.add(dto);
+        }
+        return voliDaMostrare;
     }
 
     @Override
