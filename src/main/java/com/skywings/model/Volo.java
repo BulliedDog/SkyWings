@@ -73,6 +73,10 @@ public class Volo {
     public String getDurataFormattata() {
         if (orarioPartenza == null || orarioArrivo == null) return "N/A";
 
+        if (orarioArrivo.isBefore(orarioPartenza)) {
+            return "N/A";
+        }
+
         Duration duration = Duration.between(orarioPartenza, orarioArrivo);
         long ore = duration.toHours();
         long minuti = duration.toMinutesPart();

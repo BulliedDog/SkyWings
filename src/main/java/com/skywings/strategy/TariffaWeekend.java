@@ -11,10 +11,10 @@ public class TariffaWeekend implements TariffaStrategy {
 
     @Override
     public BigDecimal calcolaPrezzo(Volo volo, BigDecimal prezzoBase) {
-        // Se il volo è di Sabato o Domenica, il prezzo aumenta del 20%
+        // Se il volo è di Sabato o Domenica, il prezzo aumenta del 30%
         DayOfWeek giorno = volo.getOrarioPartenza().getDayOfWeek();
         if (giorno == DayOfWeek.SATURDAY || giorno == DayOfWeek.SUNDAY) {
-            return prezzoBase.multiply(new BigDecimal("1.20"));
+            return prezzoBase.multiply(new BigDecimal("1.30"));
         }
         return prezzoBase;
     }

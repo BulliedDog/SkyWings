@@ -1,3 +1,5 @@
+package strutturali;
+
 import com.skywings.model.Utente;
 import com.skywings.repository.interfaces.UtenteDAO;
 import com.skywings.service.AutenticazioneService;

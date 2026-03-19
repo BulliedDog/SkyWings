@@ -1,3 +1,5 @@
+package strutturali;
+
 import com.skywings.model.Volo;
 import org.junit.jupiter.api.Test;
 
