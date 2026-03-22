@@ -28,10 +28,6 @@ public class CittaService {
         cittaDAO.save(citta);
     }
 
-    public void updateCitta(Citta citta) {
-        cittaDAO.update(citta);
-    }
-
     public void deleteCitta(Long id) {
         cittaDAO.deleteById(id);
     }

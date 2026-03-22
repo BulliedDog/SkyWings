@@ -8,9 +8,7 @@ import com.skywings.observer.Subject;
 import com.skywings.repository.interfaces.VoloDAO;
 import com.skywings.strategy.TariffaContext;
 import com.skywings.strategy.TariffaManager;
-import com.skywings.strategy.TariffaStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -136,19 +134,6 @@ public class VoloService implements Subject {
     public void notifyObservers(Volo volo) {
         for (Observer o : observers) {
             o.update(volo);
-        }
-    }
-
-    public void aggiornaStatoVolo(Long idVolo, Volo.StatoVolo nuovoStato) {
-        Volo v = voloDAO.findById(idVolo)
-                .orElseThrow(() -> new RuntimeException("Volo non trovato con ID: " + idVolo));
-
-        if (!v.getStato().equals(nuovoStato)) {
-            System.out.println("DEBUG: Aggiornamento stato e notifica per volo " + idVolo);
-            v.setStato(nuovoStato);
-            voloDAO.save(v);
-
-            notifyObservers(v);
         }
     }
 }

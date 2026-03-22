@@ -36,29 +36,54 @@ public class PrenotazioneService {
         this.aereoService = aereoService;
     }
 
+    @Transactional
     public void addPrenotazione(Prenotazione pre) {
-        if (pre.getDataPrenotazione() == null) {
-            pre.setDataPrenotazione(LocalDateTime.now());
-        }
-        prenotazioneDAO.save(pre);
-    }
+        boolean richiedeControllo = false;
 
-    public void creaPrenotazione(PrenotazioneDTO dto) {
-        if (dto.getDataPrenotazione() == null) {
-            dto.setDataPrenotazione(LocalDateTime.now());
+        if (pre.getId() == null) {
+            // 1. È una NUOVA prenotazione: richiede il controllo
+            richiedeControllo = true;
+
+            if (pre.getDataPrenotazione() == null) {
+                pre.setDataPrenotazione(LocalDateTime.now());
+            }
+            if (pre.getPrezzoAcquistato() == null) {
+                VoloDTO volo = voloService.getVoloByIdConPrezzo(pre.getVoloId());
+                pre.setPrezzoAcquistato(volo.getPrezzoCalcolato());
+            }
+        } else {
+            // 2. È una MODIFICA: recuperiamo la vecchia prenotazione per vedere cos'è cambiato
+            Prenotazione vecchiaPre = prenotazioneDAO.findById(pre.getId());
+
+            // Se la classe (Economy/Business) è cambiata, dobbiamo ricontrollare i posti!
+            if (vecchiaPre != null && !vecchiaPre.getClasse().equalsIgnoreCase(pre.getClasse())) {
+                richiedeControllo = true;
+            }
         }
-        Prenotazione entity = prenotazioneMapper.toEntity(dto);
-        prenotazioneDAO.save(entity);
+
+        // 3. Eseguiamo il controllo di disponibilità solo se necessario
+        if (richiedeControllo) {
+            VoloDTO volo = voloService.getVoloByIdConPrezzo(pre.getVoloId());
+            Aereo aereo = aereoService.getAereoById(volo.getIdAereo());
+            String classe = pre.getClasse();
+
+            int capacitaMassima = classe.equalsIgnoreCase("Business")
+                    ? aereo.getCapacitaBusiness()
+                    : aereo.getCapacitaEconomy();
+
+            int postiOccupati = prenotazioneDAO.countPrenotazioniByVoloAndClasse(pre.getVoloId(), classe);
+
+            if (postiOccupati >= capacitaMassima) {
+                throw new IllegalStateException("We are sorry, " + classe + " class is fully booked for this flight.");
+            }
+        }
+
+        // 4. Salvataggio (Insert se id==null, Update se id!=null)
+        prenotazioneDAO.save(pre);
     }
 
     public List<PrenotazioneDTO> getPrenotazioniPerUtente(Long utenteId) {
         return prenotazioneDAO.findByUtenteId(utenteId).stream()
-                .map(prenotazioneMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    public List<PrenotazioneDTO> getPrenotazioniPerVolo(Long voloId) {
-        return prenotazioneDAO.findByVoloId(voloId).stream()
                 .map(prenotazioneMapper::toDto)
                 .collect(Collectors.toList());
     }

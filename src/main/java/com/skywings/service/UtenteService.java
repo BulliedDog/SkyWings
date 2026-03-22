@@ -27,15 +27,6 @@ public class UtenteService {
         return utenteDAO.findById(id).orElse(null);
     }
 
-    public void addUtente(Utente utente) {
-        // Se non specificato, impostiamo un ruolo di default
-        if (utente.getRuolo() == null || utente.getRuolo().isEmpty()) {
-            utente.setRuolo("CLIENTE");
-        }
-        utente.setPassword(autenticazioneService.criptaPassword(utente.getPassword()));
-        utenteDAO.save(utente);
-    }
-
     public void updateUtente(Utente utenteDalForm) {
         // 1. Se l'ID è nullo, è un NUOVO utente: cripta e salva
         if (utenteDalForm.getId() == null || utenteDalForm.getId() == 0) {

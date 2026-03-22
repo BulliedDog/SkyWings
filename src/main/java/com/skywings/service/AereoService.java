@@ -25,10 +25,6 @@ public class AereoService {
         aereoDAO.save(aereo);
     }
 
-    public void updateAereo(Aereo aereo) {
-        aereoDAO.update(aereo);
-    }
-
     public void deleteAereo(Long id) {
         aereoDAO.deleteById(id);
     }
